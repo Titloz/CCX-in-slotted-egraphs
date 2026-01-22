@@ -170,7 +170,16 @@ impl<L: Language, N: Analysis<L>> EGraph<L, N> {
                 // computed_bij :: shape-slots -> slots(i)
                 // bij :: shape-slots -> slots(i)
                 let perm = computed_bij.inverse().compose_partial(&bij);
-                let perm = perm.iter().filter_map(|(x, y)| if c.slots.contains(&x) && c.slots.contains(&y) { Some((x, y)) } else { None }).collect();
+                let perm = perm
+                    .iter()
+                    .filter_map(|(x, y)| {
+                        if c.slots.contains(&x) && c.slots.contains(&y) {
+                            Some((x, y))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect();
                 assert!(c.group.contains(&perm));
 
                 for x in real.applied_id_occurrences() {

@@ -1,3 +1,7 @@
+use std::collections::{HashMap, VecDeque};
+
+use rustc_hash::FxBuildHasher;
+
 use crate::*;
 
 type Unifier = HashMap<Slot, AppliedId>;
@@ -194,4 +198,75 @@ fn occ<L: Language, N: Analysis<L>>
         }
     }
     return false;
+}
+
+fn apply_unifier_class<L: Language>
+    (eg: &EGraph<L,AstSizeAnalysis>, mu: &Unifier, c0: &AppliedId) -> (AppliedId, bool) 
+{
+    todo!()
+}
+
+fn rec_parents<L: Language, N: Analysis<L>>
+    (eg: &mut EGraph<L,N>, c0: &AppliedId) -> Vec<AppliedId>
+{
+    todo!()
+}
+
+pub(crate) fn merge<L: Language>
+    (eg: &mut EGraph<L,AstSizeAnalysis>, max: u64, wo: &mut VecDeque<AppliedId>, us: &mut VecDeque<AppliedId>, c0: &AppliedId) -> bool 
+{
+    for c1 in wo.clone() {
+        // quite unsure about this beginning
+        let hash_builder = rustc_hash::FxBuildHasher::from(FxBuildHasher {});
+        let empty = HashMap::new();
+        let visited = HashSet::with_hasher(hash_builder);
+        let (mgus,_) = compute_mgus(eg, c0, &c1, &empty, &visited);
+        for mu in mgus {
+            let (c_new, added_new_node) = apply_unifier_class(eg, &mu, c0);
+            eg.rebuild();
+            // satisfiability of the class tested by the analyses
+            let analysis = *eg.analysis_data(c_new.id);
+            let mut sat = true;
+            if analysis > max {
+                sat = false;
+            }
+
+            if sat {
+                let mut subsumed = !added_new_node; // all nodes that were added were already in the e-graph and no new equality between classes has been learned
+
+                if !subsumed {
+                    for c in wo.clone() {
+                        if eg.find_id(c_new.id) == eg.find_id(c.id) {
+                            let reachable_parents = rec_parents(eg, &c);
+                            // wo - reachable parents
+                            // us + reachable parents
+                            todo!()
+                        }
+                        // us = us - c
+                        if eg.find_id(c.id) == eg.find_id(c0.id) {
+                            subsumed = true;
+                        }
+                    }
+                    if !subsumed {
+                        //let mut new_subsumed = false;
+                        for c in us.clone() {
+                            if eg.find_id(c_new.id) == eg.find_id(c.id) {
+                                todo!()
+                            } 
+                        }
+                        if !subsumed {
+                            if eg.find_id(c_new.id) == eg.find_id(c0.id) {
+                                todo!()
+                            }
+                        }
+                    }
+                    // us = us + cnew.applied_id
+                    if subsumed {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
 }
